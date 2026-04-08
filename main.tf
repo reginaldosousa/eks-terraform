@@ -16,19 +16,9 @@ terraform {
 
 # Declara o provedor AWS e a região onde os recursos serão criados
 provider "aws" {
-  region = "us-east-1"
-}
+  region = var.region
 
-# Recupera as zonas de disponibilidade disponíveis na região especificada 
-# apenas para validar a configuração do provedor e garantir que a região 
-# está correta. Isso é útil para evitar erros de configuração e garantir 
-# que os recursos sejam criados na região desejada.
-data "aws_availability_zones" "zones" {
-  region = "us-east-1"
-}
-
-# Exibe as zonas de disponibilidade recuperadas para verificar se a configuração
-# do provedor está correta e se as zonas estão disponíveis na região especificada.
-output "availability_zones" {
-  value = data.aws_availability_zones.zones.names
+  default_tags {
+    tags = local.default_tags
+  }
 }
