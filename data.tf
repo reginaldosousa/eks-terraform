@@ -3,6 +3,6 @@
 # está correta. Isso é útil para evitar erros de configuração e garantir 
 # que os recursos sejam criados na região desejada.
 data "aws_availability_zones" "available" {
-  state = "available"
+  state  = "available"
   region = var.region
 }

@@ -7,13 +7,13 @@ locals {
 
 # Configuração do módulo VPC para criar uma Virtual Private Cloud (VPC) na AWS
 module "vpc" {
-source  = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
   version = "~> 6.0"
 
   name = "${var.project_name}-vpc"
   cidr = local.vpc_cidr
 
-  azs             = local.azs
+  azs = local.azs
   # Gerando sub-redes privadas, públicas e intra para cada zona de disponibilidade usando 
   # a função cidrsubnet para calcular os CIDRs com base no CIDR da VPC
   private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 4, k)]
