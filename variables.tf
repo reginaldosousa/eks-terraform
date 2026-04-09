@@ -10,6 +10,12 @@ variable "region" {
   description = "Região da AWS onde os recursos serão criados"
 }
 
+variable "cloudflare_api_token" {
+  type        = string
+  description = "Token de acesso do Cloudflare"
+  sensitive   = true
+}
+
 locals {
   default_tags = {
     Project   = var.project_name
