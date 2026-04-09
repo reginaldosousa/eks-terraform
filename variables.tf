@@ -16,6 +16,11 @@ variable "cloudflare_api_token" {
   sensitive   = true
 }
 
+variable "letsencrypt_email" {
+  type        = string
+  description = "Email utilizado para comunicação com a API Lets Encrypt"
+}
+
 locals {
   default_tags = {
     Project   = var.project_name
