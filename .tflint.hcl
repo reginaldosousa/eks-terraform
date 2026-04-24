@@ -1,6 +1,6 @@
 plugin "aws" {
   enabled = true
-  version = "0.31.1"
+  version = "0.47.0"
   source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }
 
@@ -47,49 +47,4 @@ rule "terraform_naming_convention" {
 
 rule "terraform_standard_module_structure" {
   enabled = false
-}
-
-# AWS-specific rules
-rule "aws_instance_ebs_encryption_by_default" {
-  enabled = true
-}
-
-rule "aws_instance_multiple_public_ips" {
-  enabled = true
-}
-
-rule "aws_s3_bucket_server_side_encryption_configuration" {
-  enabled = true
-}
-
-rule "aws_s3_bucket_acl" {
-  enabled = true
-}
-
-rule "aws_security_group_rule_cidr_ip" {
-  enabled = true
-}
-
-rule "aws_elasticache_parameter_group_description" {
-  enabled = true
-}
-
-rule "aws_db_instance_publicly_accessible" {
-  enabled = true
-}
-
-rule "aws_db_instance_deletion_protection" {
-  enabled = true
-}
-
-rule "aws_rds_cluster_multi_az" {
-  enabled = true
-}
-
-rule "aws_rds_cluster_deletion_protection" {
-  enabled = true
-}
-
-rule "aws_redshift_cluster_logging" {
-  enabled = true
 }
