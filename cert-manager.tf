@@ -1,7 +1,7 @@
 # Cria o Cert-Manager no cluster EKS usando o Helm. 
 # O Cert-Manager é uma ferramenta que automatiza a gestão de certificados TLS no Kubernetes,
 # facilitando a obtenção, renovação e gerenciamento de certificados para aplicações que exigem comunicação segura.
-resource "helm_release" "cert-manager" {
+resource "helm_release" "cert_manager" {
   repository       = "oci://quay.io/jetstack/charts"
   chart            = "cert-manager"
   name             = "cert-manager"
@@ -21,7 +21,7 @@ resource "helm_release" "cert-manager" {
 # Cria o segredo para o token da API da Cloudflare no namespace do cert-manager.
 # Este segredo é necessário para que o Cert-Manager possa autenticar e gerenciar os registros DNS no Cloudflare, 
 # especialmente para o desafio DNS-01 usado na validação de certificados com o Let's Encrypt.
-resource "kubernetes_secret_v1" "cloudflare-api-token-cm" {
+resource "kubernetes_secret_v1" "cloudflare_api_token_cm" {
   metadata {
     name      = "cloudflare-api-token"
     namespace = "cert-manager"
@@ -38,7 +38,7 @@ resource "kubernetes_secret_v1" "cloudflare-api-token-cm" {
 # Neste caso, estamos configurando o ClusterIssuer para usar o desafio DNS-01 com o provedor Cloudflare, 
 # permitindo que o Cert-Manager gerencie os registros DNS necessários para validar a propriedade do domínio 
 # e obter os certificados TLS de forma automatizada.
-resource "kubernetes_manifest" "cluster-issuer" {
+resource "kubernetes_manifest" "cluster_issuer" {
   manifest = {
     apiVersion = "cert-manager.io/v1"
     kind       = "ClusterIssuer"
