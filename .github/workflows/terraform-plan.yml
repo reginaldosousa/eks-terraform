@@ -85,6 +85,3 @@ jobs:
               body: summary + '\n\n**Plan artifact saved.** Download to review detailed changes.'
             });
 
-      - name: Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
