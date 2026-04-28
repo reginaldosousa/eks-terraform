@@ -26,6 +26,6 @@ locals {
     Project   = var.project_name
     Terraform = "true"
     Environment = "Prod"
-    Services = "EKS Cluster"
+    Service = "EKS Cluster"
   }
 }
