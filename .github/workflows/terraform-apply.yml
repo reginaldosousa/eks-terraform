@@ -1,0 +1,67 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '*.tf'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ~> 1.14
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-east-1
+
+      - name: Terraform Init
+        run: terraform init
+        env:
+          TF_IN_AUTOMATION: true
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -lock=false -out=tfplan
+        env:
+          TF_IN_AUTOMATION: true
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_letsencrypt_email: ${{ secrets.LETSENCRYPT_EMAIL }}
+
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -lock=false -auto-approve tfplan
+        env:
+          TF_IN_AUTOMATION: true
+
+      - name: Output State Information
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actor**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Backup State File
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state-backup-${{ github.run_number }}
+          path: terraform.tfstate
+          retention-days: 30

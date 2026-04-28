@@ -1,4 +1,4 @@
-resource "kubernetes_ingress_class_v1" "ingress-class" {
+resource "kubernetes_ingress_class_v1" "ingress_class" {
   metadata {
     name = "alb"
     labels = {

@@ -23,7 +23,9 @@ variable "letsencrypt_email" {
 
 locals {
   default_tags = {
-    Project   = var.project_name
-    Terraform = "true"
+    Project     = var.project_name
+    Terraform   = "true"
+    Environment = "Prod"
+    Service     = "EKS Cluster"
   }
 }

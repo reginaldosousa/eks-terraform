@@ -1,6 +1,6 @@
 # Secret para armazenar o token de API do Cloudflare, que é necessário para que 
 # o ExternalDNS possa autenticar e gerenciar os registros DNS no Cloudflare.
-resource "kubernetes_secret_v1" "cloudflare-api-token" {
+resource "kubernetes_secret_v1" "cloudflare_api_token" {
   metadata {
     name      = "cloudflare-api-token"
     namespace = "kube-system"
@@ -17,7 +17,7 @@ resource "kubernetes_secret_v1" "cloudflare-api-token" {
 # token de API do Cloudflare através de um segredo Kubernetes. 
 # Isso permite que o ExternalDNS autentique e gerencie os registros DNS no Cloudflare 
 # com base nas mudanças no cluster Kubernetes, como a criação ou exclusão de serviços e ingressos.
-resource "helm_release" "external-dns" {
+resource "helm_release" "external_dns" {
   repository = "https://kubernetes-sigs.github.io/external-dns/"
   chart      = "external-dns"
   name       = "external-dns"
@@ -33,7 +33,7 @@ resource "helm_release" "external-dns" {
         { name : "CF_API_TOKEN"
           valueFrom : {
             secretKeyRef : {
-              name : kubernetes_secret_v1.cloudflare-api-token.metadata[0].name
+              name : kubernetes_secret_v1.cloudflare_api_token.metadata[0].name
               key : "apiKey"
             }
           }
