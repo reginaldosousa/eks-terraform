@@ -21,58 +21,36 @@ jobs:
     if: github.event_name == 'pull_request' || (github.event.workflow_run.conclusion == 'success' && github.event_name == 'workflow_run')
     
     steps:
-      - name: Checkout code
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Checkout base branch
+        uses: actions/checkout@v6
+        with:
+          ref: '${{ github.event.pull_request.base.ref }}'
+
+      - name: Generate Infracost cost estimate baseline
+        run: |
+          infracost breakdown --path=. \
+                              --format=json \
+                              --out-file=/tmp/infracost-base.json
+
+      - name: Checkout PR branch
         uses: actions/checkout@v6
 
-      - name: Download plan artifact
-        uses: actions/download-artifact@v4
-        if: github.event_name == 'workflow_run'
-        with:
-          name: tfplan
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
-        continue-on-error: true
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: ~> 1.14
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: us-east-1
-
-      - name: Terraform Init (backend disabled)
-        run: terraform init -backend=false
-        env:
-          TF_IN_AUTOMATION: true
-
-      - name: Generate Cost Estimate
-        id: cost
+      - name: Generate Infracost diff
         run: |
-          echo "## Cost Estimation" > cost_estimate.md
-          echo "This is a sample cost estimation comment." >> cost_estimate.md
-          echo "For accurate costs, integrate with Infracost:" >> cost_estimate.md
-          echo "https://www.infracost.io/docs/integrations/github_cli/" >> cost_estimate.md
-          cat cost_estimate.md
+          infracost diff --path=. \
+                          --format=json \
+                          --compare-to=/tmp/infracost-base.json \
+                          --out-file=/tmp/infracost.json
 
-      - name: Comment PR with Cost Estimate
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v9
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const fs = require('fs');
-            try {
-              const costEstimate = fs.readFileSync('cost_estimate.md', 'utf8');
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: costEstimate
-              });
-            } catch (err) {
-              console.log('Cost estimate file not found');
-            }
+      - name: Post Infracost comment
+        run: |
+          infracost comment github --path=/tmp/infracost.json \
+                                  --repo=$GITHUB_REPOSITORY \
+                                  --github-token=${{ github.token }} \
+                                  --pull-request=${{ github.event.pull_request.number }} \
+                                  --behavior=update
