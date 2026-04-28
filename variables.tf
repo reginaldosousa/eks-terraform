@@ -25,5 +25,7 @@ locals {
   default_tags = {
     Project   = var.project_name
     Terraform = "true"
+    Environment = "Prod"
+    Services = "EKS Cluster"
   }
 }
