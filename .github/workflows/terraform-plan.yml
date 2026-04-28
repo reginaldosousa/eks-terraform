@@ -1,0 +1,89 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    paths:
+      - '*.tf'
+      - '.github/workflows/terraform-plan.yml'
+  workflow_run:
+    workflows: ["Terraform Validate, Lint, and Format"]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ~> 1.14
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-east-1
+
+      - name: Terraform Init
+        run: terraform init
+        env:
+          TF_IN_AUTOMATION: true
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -lock=false -out=tfplan
+        env:
+          TF_IN_AUTOMATION: true
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_letsencrypt_email: ${{ secrets.LETSENCRYPT_EMAIL }}
+        continue-on-error: true
+
+      - name: Save Plan Output
+        run: terraform show -json tfplan > tfplan.json
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tfplan
+          path: |
+            tfplan
+            tfplan.json
+          retention-days: 5
+
+      - name: Comment PR with Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const planOutput = require('./tfplan.json');
+            
+            let summary = '## Terraform Plan Summary\n\n';
+            summary += `- **Add**: ${planOutput.resource_changes?.filter(r => r.change.actions.includes('create')).length || 0}\n`;
+            summary += `- **Modify**: ${planOutput.resource_changes?.filter(r => r.change.actions.includes('update')).length || 0}\n`;
+            summary += `- **Delete**: ${planOutput.resource_changes?.filter(r => r.change.actions.includes('delete')).length || 0}\n`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary + '\n\n**Plan artifact saved.** Download to review detailed changes.'
+            });
+
+      - name: Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
